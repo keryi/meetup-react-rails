@@ -1,0 +1,12 @@
+p#notice = notice
+
+p
+  strong Title:
+  = @meetup.title
+p
+  strong Description:
+  = @meetup.description
+
+= link_to 'Edit', edit_meetup_path(@meetup)
+'|
+= link_to 'Back', meetups_path

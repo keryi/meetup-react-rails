@@ -1,0 +1,23 @@
+h1 Listing meetups
+
+table
+  thead
+    tr
+      th Title
+      th Description
+      th
+      th
+      th
+
+  tbody
+    - @meetups.each do |meetup|
+      tr
+        td = meetup.title
+        td = meetup.description
+        td = link_to 'Show', meetup
+        td = link_to 'Edit', edit_meetup_path(meetup)
+        td = link_to 'Destroy', meetup, data: {:confirm => 'Are you sure?'}, :method => :delete
+
+br
+
+= link_to 'New Meetup', new_meetup_path
