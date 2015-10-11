@@ -1,5 +1,35 @@
 DOM = React.DOM
 
+FormInputWithLabel = React.createClass
+  displayName: 'FormInputWithLabel'
+
+  getDefaultProps: ->
+    elementType: 'input'
+    inputType: 'text'
+
+  render: ->
+    DOM.div
+      className: 'form-group'
+      DOM.label
+        htmlFor: @props.id,
+        className: 'col-lg-2 control-label'
+        @props.labelText
+      DOM.div
+        className: 'col-lg-10'
+        DOM[@props.elementType]
+          className: 'form-control'
+          placeholder: @props.placeholder,
+          id: @props.id,
+          type: @tagType(),
+          value: @props.value
+          onChange: @props.onChanged
+
+  tagType: ->
+    {
+      'input': @props.inputType,
+      'textarea': null
+    }[@props.elementType]
+
 NewMeetupForm = React.createClass
   displayName: 'NewMeetupForm'
 
@@ -18,39 +48,23 @@ NewMeetupForm = React.createClass
   render: ->
     DOM.form(
       className: 'form-horizontal'
-      DOM.div
-        className: 'form-group'
-        DOM.label
-          htmlFor: 'title',
-          className: 'col-lg-2 control-label'
-          'Title'
-        DOM.div
-          className: 'col-lg-10'
-          DOM.input
-            className: 'form-control'
-            placeholder: 'Meetup title',
-            id: 'title',
-            type: 'text',
-            value: @state.title
-            onChange: @titleChanged
-      DOM.div
-        className: 'form-group'
-        DOM.label
-          htmlFor: 'title',
-          className: 'col-lg-2 control-label'
-          'Title'
-        DOM.div
-          className: 'col-lg-10'
-          DOM.input
-            className: 'form-control'
-            placeholder: 'Meetup description',
-            id: 'description',
-            type: 'text',
-            value: @state.description
-            onChange: @descriptionChanged
+      formInputWithLabel
+        id: 'title'
+        value: @state.title
+        onChange: @titleChanged
+        placeholder: 'Meetup title'
+        labelText: 'Title'
+
+      formInputWithLabel
+        id: 'description'
+        value: @state.description
+        onChange: @descriptionChanged
+        placeholder: 'Meetup description'
+        labelText: 'Description'
     )
 
 createNewMeetupForm = React.createFactory(NewMeetupForm)
+formInputWithLabel = React.createFactory(FormInputWithLabel)
 
 $ ->
   React.render(
