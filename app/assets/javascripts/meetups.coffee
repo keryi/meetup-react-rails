@@ -39,11 +39,10 @@ NewMeetupForm = React.createClass
       description: ''
     }
 
-  titleChanged: (e) ->
-    @setState(title: e.target.value)
-
-  descriptionChanged: (e) ->
-    @setState(description: e.target.value)
+  fieldChanged: (fieldName, e)->
+    stateUpdate = {}
+    stateUpdate[fieldName] = e.target.value
+    @setState(stateUpdate)
 
   render: ->
     DOM.form(
@@ -51,14 +50,14 @@ NewMeetupForm = React.createClass
       formInputWithLabel
         id: 'title'
         value: @state.title
-        onChange: @titleChanged
+        onChange: @fieldChanged.bind(null, 'title')
         placeholder: 'Meetup title'
         labelText: 'Title'
 
       formInputWithLabel
         id: 'description'
         value: @state.description
-        onChange: @descriptionChanged
+        onChange: @fieldChanged.bind(null, 'description')
         placeholder: 'Meetup description'
         labelText: 'Description'
     )
