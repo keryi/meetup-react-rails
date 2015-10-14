@@ -13,6 +13,7 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 gem 'react-rails'
 gem 'slim-rails'
 gem 'bootstrap-sass'
+gem "font-awesome-rails"
 
 group :development, :test do
   gem 'byebug'
