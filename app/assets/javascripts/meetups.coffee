@@ -171,7 +171,7 @@ NewMeetupForm = React.createClass
     @state.meetup.warnings[fieldName] = validator(@state.meetup[fieldName])
 
   fieldChanged: (fieldName, e)->
-    @state.meeup[fieldName] = e.target.value
+    @state.meetup[fieldName] = e.target.value
     @validateField(fieldName)
     @forceUpdate()
 
