@@ -151,20 +151,16 @@ NewMeetupForm = React.createClass
 
   getInitialState: ->
     {
-      title: ''
-      description: ''
-      date: new Date()
-      seoText: null
-      warnings: {
-        title: null
+      meetup: {
+        title: ''
+        description: ''
+        date: new Date()
+        seoText: null
+        warnings: {
+          title: null
+        }
       }
     }
-
-  fieldChanged: (fieldName, e)->
-    newState = $.extend(true, {}, @state)
-    newState[fieldName] = e.target.value
-    newState['warnings'][fieldName] = @validateField(fieldName, e.target.value)
-    @setState(newState)
 
   validateField: (fieldName, value) ->
     validator = {
@@ -172,33 +168,39 @@ NewMeetupForm = React.createClass
         if /\S/.test(text) then null else 'Cannot be blank'
     }[fieldName]
     return unless validator
-    validator(value)
+    @state.meetup.warnings[fieldName] = validator(@state.meetup[fieldName])
+
+  fieldChanged: (fieldName, e)->
+    @state.meetup[fieldName] = e.target.value
+    @validateField(fieldName)
+    @forceUpdate()
 
   dateChanged: (newDate) ->
-    @setState(date: newDate)
+    @state.meetup.date = newDate
+    @forceUpdate()
 
   seoChanged: (seoText) ->
-    @setState(seoText: seoText)
+    @state.meetup.seoText = seoText
+    @forceUpdate()
 
   computeDefaultSeoText: () ->
-    words = @state.title.toLowerCase().split(/\s+/)
-    words.push(DateHelper.monthName(@state.date.getMonth()))
-    words.push(@state.date.getFullYear().toString())
+    words = @state.meetup.title.toLowerCase().split(/\s+/)
+    words.push(DateHelper.monthName(@state.meetup.date.getMonth()))
+    words.push(@state.meetup.date.getFullYear().toString())
     words.filter((string) -> string.trim().length > 0).join('-').toLowerCase()
 
   validateAll: () ->
     newState = $.extend(true, {}, @state)
     for field in ['title']
-      newState['warnings'][field] = @validateField(field, @state[field])
-    newState
+      @validateField(field)
 
   formSubmitted: (e) ->
     e.preventDefault()
 
-    newState = @validateAll()
-    @setState(newState)
-    for own key of newState.warnings
-      return if newState.warnings[key]
+    @validateAll()
+    @forceUpdate()
+    for own key of @state.meetup
+      return if @state.meetup.warnings[key]
 
     $.ajax
       url: '/meetups.json',
@@ -207,10 +209,10 @@ NewMeetupForm = React.createClass
       contentType: 'application/json',
       processData: false,
       data: JSON.stringify({ meetup: {
-          title: @state.title
-          description: @state.description
-          date: "#{@state.date.getFullYear()}-#{@state.date.getMonth()}-#{@state.date.getDate()}"
-          seo: @state.seoText || @computeDefaultSeoText()
+          title: @state.meetup.title
+          description: @state.meetup.description
+          date: "#{@state.meetup.date.getFullYear()}-#{@state.meetup.date.getMonth()}-#{@state.meetup.date.getDate()}"
+          seo: @state.meetup.seoText || @computeDefaultSeoText()
         }
       })
 
@@ -220,26 +222,26 @@ NewMeetupForm = React.createClass
       onSubmit: @formSubmitted
       formInputWithLabel
         id: 'title'
-        value: @state.title
+        value: @state.meetup.title
         onChange: @fieldChanged.bind(null, 'title')
         placeholder: 'Meetup title'
         labelText: 'Title'
-        warning: @state.warnings.title
+        warning: @state.meetup.warnings.title
 
       formInputWithLabel
         id: 'description'
-        value: @state.description
+        value: @state.meetup.description
         onChange: @fieldChanged.bind(null, 'description')
         placeholder: 'Meetup description'
         labelText: 'Description'
 
       dateWithLabel
-        date: @state.date
+        date: @state.meetup.date
         onChange: @dateChanged
 
       formInputWithLabelAndReset
         id: 'seo'
-        value: if @state.seoText? then @state.seoText else @computeDefaultSeoText()
+        value: if @state.meetup.seoText? then @state.meetup.seoText else @computeDefaultSeoText()
         onChange: @seoChanged
         placeholder: 'SEO text'
         labelText: 'seo'
@@ -252,8 +254,6 @@ NewMeetupForm = React.createClass
             type: 'submit'
             className: 'btn btn-primary'
             'Save'
-
-
     )
 
 createNewMeetupForm = React.createFactory(NewMeetupForm)
