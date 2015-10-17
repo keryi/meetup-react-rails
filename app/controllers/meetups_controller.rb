@@ -15,6 +15,7 @@ class MeetupsController < ApplicationController
   # GET /meetups/new
   def new
     @meetup = Meetup.new
+    @technologies = Technology.all.to_a
   end
 
   # GET /meetups/1/edit
@@ -69,6 +70,6 @@ class MeetupsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def meetup_params
-      params.require(:meetup).permit(:title, :description, :date, :seo, guests: [])
+      params.require(:meetup).permit(:title, :description, :date, :technology, :seo, guests: [])
     end
 end

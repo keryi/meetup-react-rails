@@ -155,6 +155,7 @@ NewMeetupForm = React.createClass
         title: ''
         description: ''
         date: new Date()
+        technology: @props.technologies[0].name
         seoText: null
         guests: ['']
         warnings: {
@@ -226,6 +227,7 @@ NewMeetupForm = React.createClass
           title: @state.meetup.title
           description: @state.meetup.description
           date: "#{@state.meetup.date.getFullYear()}-#{@state.meetup.date.getMonth()}-#{@state.meetup.date.getDate()}"
+          technology: @state.meetup.technology
           guests: @state.meetup.guests
           seo: @state.meetup.seoText || @computeDefaultSeoText()
         }
@@ -253,6 +255,20 @@ NewMeetupForm = React.createClass
       dateWithLabel
         date: @state.meetup.date
         onChange: @dateChanged
+
+      DOM.div
+        className: 'form-group'
+        DOM.label
+          htmlFor: 'technology'
+          className: 'col-sm-2 control-label'
+          'Technology'
+        DOM.div
+          className: 'col-sm-10'
+          DOM.select
+            className: 'form-control'
+            onChange: @fieldChanged.bind(null, 'technology')
+            value: @state.meetup.technology
+            DOM.option(value: tech.name, key: tech.id, tech.name) for tech in @props.technologies
 
       formInputWithLabelAndReset
         id: 'seo'
@@ -306,7 +322,9 @@ formInputWithLabelAndReset = React.createFactory(FormInputWithLabelAndReset)
 separator = React.createFactory(Separator)
 
 $ ->
+  container = document.getElementById('CreateNewMeetup')
+  technologies = JSON.parse(container.dataset.technologies)
   React.render(
-    createNewMeetupForm(),
-    document.getElementById('CreateNewMeetup')
+    createNewMeetupForm({ technologies: technologies }),
+    container
   )
