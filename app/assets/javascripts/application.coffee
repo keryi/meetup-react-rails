@@ -3,4 +3,5 @@
 #= require turbolinks
 #= require react
 #= require bootstrap
+#= require classname
 #= require_tree .

@@ -108,7 +108,6 @@ FormInputWithLabelAndReset = React.createClass
               DOM.i
                 className: 'fa fa-times-circle'
 
-
 FormInputWithLabel = React.createClass
   displayName: 'FormInputWithLabel'
 
@@ -124,12 +123,13 @@ FormInputWithLabel = React.createClass
         className: 'col-sm-2 control-label'
         @props.labelText
       DOM.div
-        className: 'col-sm-10'
+        className: classNames('col-sm-10': true, 'has-warning': @props.warning)
+        @warning()
         DOM[@props.elementType]
           className: 'form-control'
-          placeholder: @props.placeholder,
-          id: @props.id,
-          type: @tagType(),
+          placeholder: @props.placeholder
+          id: @props.id
+          type: @tagType()
           value: @props.value
           onChange: @props.onChange
 
@@ -139,21 +139,40 @@ FormInputWithLabel = React.createClass
       'textarea': null
     }[@props.elementType]
 
+  warning: ->
+    return null unless @props.warning
+    DOM.label
+      className: 'control-label'
+      htmlFor: @props.id
+      @props.warning
+
 NewMeetupForm = React.createClass
   displayName: 'NewMeetupForm'
 
   getInitialState: ->
     {
-      title: '',
+      title: ''
       description: ''
       date: new Date()
       seoText: null
+      warnings: {
+        title: null
+      }
     }
 
   fieldChanged: (fieldName, e)->
-    stateUpdate = {}
-    stateUpdate[fieldName] = e.target.value
-    @setState(stateUpdate)
+    newState = $.extend(true, {}, @state)
+    newState[fieldName] = e.target.value
+    newState['warnings'][fieldName] = @validateField(fieldName, e.target.value)
+    @setState(newState)
+
+  validateField: (fieldName, value) ->
+    validator = {
+      title: (text) ->
+        if /\S/.test(text) then null else 'Cannot be blank'
+    }[fieldName]
+    return unless validator
+    validator(value)
 
   dateChanged: (newDate) ->
     @setState(date: newDate)
@@ -167,8 +186,19 @@ NewMeetupForm = React.createClass
     words.push(@state.date.getFullYear().toString())
     words.filter((string) -> string.trim().length > 0).join('-').toLowerCase()
 
+  validateAll: () ->
+    newState = $.extend(true, {}, @state)
+    for field in ['title']
+      newState['warnings'][field] = @validateField(field, @state[field])
+    newState
+
   formSubmitted: (e) ->
     e.preventDefault()
+
+    newState = @validateAll()
+    @setState(newState)
+    for own key of newState.warnings
+      return if newState.warnings[key]
 
     $.ajax
       url: '/meetups.json',
@@ -177,11 +207,11 @@ NewMeetupForm = React.createClass
       contentType: 'application/json',
       processData: false,
       data: JSON.stringify({ meetup: {
-        title: @state.title
-        description: @state.description
-        date: "#{@state.date.getFullYear()}-#{@state.date.getMonth()}-#{@state.date.getDate()}"
+          title: @state.title
+          description: @state.description
+          date: "#{@state.date.getFullYear()}-#{@state.date.getMonth()}-#{@state.date.getDate()}"
+          seo: @state.seoText || @computeDefaultSeoText()
         }
-        seo: @state.seoText || @computeDefaultSeoText()
       })
 
   render: ->
@@ -194,6 +224,7 @@ NewMeetupForm = React.createClass
         onChange: @fieldChanged.bind(null, 'title')
         placeholder: 'Meetup title'
         labelText: 'Title'
+        warning: @state.warnings.title
 
       formInputWithLabel
         id: 'description'
