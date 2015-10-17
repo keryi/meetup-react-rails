@@ -156,6 +156,7 @@ NewMeetupForm = React.createClass
         description: ''
         date: new Date()
         seoText: null
+        guests: ['']
         warnings: {
           title: null
         }
@@ -173,6 +174,19 @@ NewMeetupForm = React.createClass
   fieldChanged: (fieldName, e)->
     @state.meetup[fieldName] = e.target.value
     @validateField(fieldName)
+    @forceUpdate()
+
+  guestEmailChanged: (number, e) ->
+    guests = @state.meetup.guests
+    guests[number] = e.target.value
+    lastEmail = guests[guests.length - 1]
+    penultimateEmail = guests[guests.length - 2]
+
+    if (lastEmail != '')
+      guests.push('')
+    if (guests.length >= 2 && lastEmail == '' && penultimateEmail == '')
+      guests.pop()
+
     @forceUpdate()
 
   dateChanged: (newDate) ->
@@ -212,6 +226,7 @@ NewMeetupForm = React.createClass
           title: @state.meetup.title
           description: @state.meetup.description
           date: "#{@state.meetup.date.getFullYear()}-#{@state.meetup.date.getMonth()}-#{@state.meetup.date.getDate()}"
+          guests: @state.meetup.guests
           seo: @state.meetup.seoText || @computeDefaultSeoText()
         }
       })
@@ -245,6 +260,17 @@ NewMeetupForm = React.createClass
         onChange: @seoChanged
         placeholder: 'SEO text'
         labelText: 'seo'
+
+      DOM.fieldset null,
+        DOM.legend null, 'Guests'
+        for guest, n in @state.meetup.guests
+          formInputWithLabel
+            id: 'email'
+            key: "guest-#{n}"
+            value: guest
+            onChange: @guestEmailChanged.bind(null, n)
+            placeholder: 'Email address of invitee'
+            labelText: 'Email'
 
       DOM.div
         className: 'form-group'
