@@ -146,11 +146,9 @@ FormInputWithLabel = React.createClass
       htmlFor: @props.id
       @props.warning
 
-NewMeetupForm = React.createClass
-  displayName: 'NewMeetupForm'
-
-  getInitialState: ->
-    {
+class CreateNewMeetup
+  constructor: (@element) ->
+    @meetup = {
       title: ''
       description: ''
       date: new Date()
@@ -160,87 +158,107 @@ NewMeetupForm = React.createClass
       }
     }
 
-  fieldChanged: (fieldName, e)->
-    newState = $.extend(true, {}, @state)
-    newState[fieldName] = e.target.value
-    newState['warnings'][fieldName] = @validateField(fieldName, e.target.value)
-    @setState(newState)
+  dateChanged: (newDate) ->
+    @meetup.date = newDate
+    @render()
 
-  validateField: (fieldName, value) ->
+  fieldChanged: (fieldName, e) ->
+    @meetup[fieldName] = e.target.value
+    @validateField(fieldName)
+    @render()
+
+  validateField: (fieldName) ->
     validator = {
       title: (text) ->
         if /\S/.test(text) then null else 'Cannot be blank'
     }[fieldName]
     return unless validator
-    validator(value)
-
-  dateChanged: (newDate) ->
-    @setState(date: newDate)
+    @meetup.warnings[fieldName] = validator(@meetup[fieldName])
 
   seoChanged: (seoText) ->
-    @setState(seoText: seoText)
-
-  computeDefaultSeoText: () ->
-    words = @state.title.toLowerCase().split(/\s+/)
-    words.push(DateHelper.monthName(@state.date.getMonth()))
-    words.push(@state.date.getFullYear().toString())
-    words.filter((string) -> string.trim().length > 0).join('-').toLowerCase()
+    @meetup.seoText = seoText
+    @render()
 
   validateAll: () ->
-    newState = $.extend(true, {}, @state)
     for field in ['title']
-      newState['warnings'][field] = @validateField(field, @state[field])
-    newState
+      @validateField(field)
 
   formSubmitted: (e) ->
     e.preventDefault()
 
-    newState = @validateAll()
-    @setState(newState)
-    for own key of newState.warnings
-      return if newState.warnings[key]
+    @validateAll()
+    @render()
+
+    for own key of @meetup
+      return if @meetup.warnings[key]
 
     $.ajax
-      url: '/meetups.json',
-      type: 'post',
-      dataType: 'JSON',
-      contentType: 'application/json',
-      processData: false,
-      data: JSON.stringify({ meetup: {
-          title: @state.title
-          description: @state.description
-          date: "#{@state.date.getFullYear()}-#{@state.date.getMonth()}-#{@state.date.getDate()}"
-          seo: @state.seoText || @computeDefaultSeoText()
+      url: '/meetups.json'
+      type: 'POST'
+      dataType: 'JSON'
+      contentType: 'application/json'
+      processData: false
+      data: JSON.stringify({
+        meetup: {
+          title: @meetup.title
+          description: @meetup.description
+          date: [
+            @meetup.date.getFullYear()
+            @meetup.date.getMont() + 1
+            @meetup.date.getDate()
+          ].join('-')
+          seo: @meetup.seoText
         }
       })
+
+  render: () ->
+    React.render(
+      createNewMeetupForm(
+        meetup: @meetup,
+        fieldChanged: @fieldChanged.bind(@),
+        dateChanged: @dateChanged.bind(@),
+        seoChanged: @seoChanged.bind(@),
+        formSubmitted: @formSubmitted.bind(@)
+      ),
+      @element
+    )
+
+NewMeetupForm = React.createClass
+  displayName: 'NewMeetupForm'
+
+  computeDefaultSeoText: () ->
+    words = @props.meetup.title.toLowerCase().split(/\s+/)
+    words.push(DateHelper.monthName(@props.meetup.date.getMonth()))
+    words.push(@props.meetup.date.getFullYear().toString())
+    words.filter((string) -> string.trim().length > 0).join('-').toLowerCase()
 
   render: ->
     DOM.form(
       className: 'form-horizontal'
-      onSubmit: @formSubmitted
+      onSubmit: @props.formSubmitted
       formInputWithLabel
         id: 'title'
-        value: @state.title
-        onChange: @fieldChanged.bind(null, 'title')
+        value: @props.meetup.title
+        onChange: @props.fieldChanged.bind(null, 'title')
         placeholder: 'Meetup title'
         labelText: 'Title'
-        warning: @state.warnings.title
+        warning: @props.meetup.warnings.title
 
       formInputWithLabel
         id: 'description'
-        value: @state.description
-        onChange: @fieldChanged.bind(null, 'description')
+        value: @props.meetup.description
+        onChange: @props.fieldChanged.bind(null, 'description')
         placeholder: 'Meetup description'
         labelText: 'Description'
 
       dateWithLabel
-        date: @state.date
-        onChange: @dateChanged
+        date: @props.meetup.date
+        onChange: @props.dateChanged
 
       formInputWithLabelAndReset
         id: 'seo'
-        value: if @state.seoText? then @state.seoText else @computeDefaultSeoText()
-        onChange: @seoChanged
+        value: if @props.meetup.seoText? then @props.meetup.seoText else @computeDefaultSeoText()
+        onChange: @props.seoChanged
         placeholder: 'SEO text'
         labelText: 'seo'
 
@@ -252,8 +270,6 @@ NewMeetupForm = React.createClass
             type: 'submit'
             className: 'btn btn-primary'
             'Save'
-
-
     )
 
 createNewMeetupForm = React.createFactory(NewMeetupForm)
@@ -262,7 +278,6 @@ dateWithLabel = React.createFactory(DateWithLabel)
 formInputWithLabelAndReset = React.createFactory(FormInputWithLabelAndReset)
 
 $ ->
-  React.render(
-    createNewMeetupForm(),
-    document.getElementById('CreateNewMeetup')
-  )
+  element = document.getElementById('CreateNewMeetup')
+  app = new CreateNewMeetup(element)
+  app.render()
