@@ -263,14 +263,15 @@ NewMeetupForm = React.createClass
 
       DOM.fieldset null,
         DOM.legend null, 'Guests'
-        for guest, n in @state.meetup.guests
-          formInputWithLabel
-            id: 'email'
-            key: "guest-#{n}"
-            value: guest
-            onChange: @guestEmailChanged.bind(null, n)
-            placeholder: 'Email address of invitee'
-            labelText: 'Email'
+        separator: null,
+          for guest, n in @state.meetup.guests
+            formInputWithLabel
+              id: 'email'
+              key: "guest-#{n}"
+              value: guest
+              onChange: @guestEmailChanged.bind(null, n)
+              placeholder: 'Email address of invitee'
+              labelText: 'Email'
 
       DOM.div
         className: 'form-group'
@@ -282,10 +283,27 @@ NewMeetupForm = React.createClass
             'Save'
     )
 
+Separator = React.createClass
+  displayName: 'Separator'
+  render: () ->
+    children = []
+    for child, i in @props.children
+      children.push(child)
+      if i < @props.children.length - 1
+        children.push(
+          DOM.div
+            key: "separator-#{i}"
+            className: 'col-sm-10 col-sm-offset-2'
+            DOM.hr
+              className: 'form-input-separator'
+        )
+    DOM.div(null, children)
+
 createNewMeetupForm = React.createFactory(NewMeetupForm)
 formInputWithLabel = React.createFactory(FormInputWithLabel)
 dateWithLabel = React.createFactory(DateWithLabel)
 formInputWithLabelAndReset = React.createFactory(FormInputWithLabelAndReset)
+separator = React.createFactory(Separator)
 
 $ ->
   React.render(
